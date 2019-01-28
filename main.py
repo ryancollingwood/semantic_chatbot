@@ -40,6 +40,9 @@ class SemanticChatBot(object):
             ],
             logic_adapters=[
                 {
+                    'import_path': 'onto_adapter.OntoAdapter'
+                },
+                {
                     "import_path": "chatterbot.logic.BestMatch",
                     "statement_comparison_function": comparisons.levenshtein_distance,
                     "response_selection_method": response_selection.get_first_response,
