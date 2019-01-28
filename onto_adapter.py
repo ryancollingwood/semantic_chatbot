@@ -38,6 +38,12 @@ class OntoAdapter(LogicAdapter):
 
     def process(self, input_statement, additional_response_selection_parameters):
 
+        def print_values(what, values):
+            print(what)
+            if values is not None:
+                for list_value in list(values):
+                    print("\t", list_value)
+            print("\r")
 
         import random
 
@@ -52,11 +58,12 @@ class OntoAdapter(LogicAdapter):
         labels = (list(self.ontology.preferredLabel(value)))
 
         try:
-            print(list(self.ontology.subject_predicates(value)))
-            print(list(self.ontology.predicate_objects(value)))
-            print(list(self.ontology.subject_objects(value)))
-            print(list(self.ontology.transitive_objects(value)))
-            print(list(self.ontology.transitive_subjects(value)))
+            print_values("predicates", self.ontology.predicates(value))
+            print_values("subject_predicates", self.ontology.subject_predicates(value))
+            print_values("predicate_objects", self.ontology.predicate_objects(value))
+            print_values("subject_objects", self.ontology.subject_objects(value))
+            print_values("transitive_objects", self.ontology.transitive_objects(value))
+            print_values("transitive_subjects", self.ontology.transitive_subjects(value))
         except:
             # eat it for now
             pass
