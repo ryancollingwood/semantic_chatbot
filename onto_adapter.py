@@ -9,20 +9,13 @@ import requests
 from filesystem import file_exists
 from filesystem import makedirs
 
+
 class OntoAdapter(LogicAdapter):
 
     def __init__(self, chatbot, **kwargs):
         super().__init__(chatbot, **kwargs)
         self.ontology = Graph()
         self.load_schema()
-
-    def load_schema_for_type(self, type):
-        schema_file = "schema-org/{type}.nt"
-        url = "https://schema.org/{type}.nt"
-
-        self.download_schema(schema_file, url)
-
-        self.ontology.parse(schema_file, format="nt")
 
     @staticmethod
     def download_schema(schema_file, url):
@@ -38,6 +31,14 @@ class OntoAdapter(LogicAdapter):
     def load_schema(self):
         schema_file = "schema-org/schema.nt"
         url = "http://schema.org/version/latest/schema.nt"
+
+        self.download_schema(schema_file, url)
+
+        self.ontology.parse(schema_file, format="nt")
+
+    def load_schema_for_type(self, type):
+        schema_file = "schema-org/{type}.nt"
+        url = "https://schema.org/{type}.nt"
 
         self.download_schema(schema_file, url)
 
@@ -88,21 +89,23 @@ class OntoAdapter(LogicAdapter):
 
         parsed = self.parse_input(input_statement.text)
 
-        value = URIRef("http://schema.org/{}".format(parsed["object"]))
+        object_uri = URIRef("http://schema.org/{}".format(parsed["object"]))
+        domain_includes_uri = URIRef("http://schema.org/domainIncludes")
+
         # self.load_schema_for_type(parsed["object"])
         # property = URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#Property")
-        print("value", value)
-        print("labels", self.get_labels("type", parsed["object"]))
-        labels = (list(self.ontology.preferredLabel(value)))
+        print("object_uri", object_uri)
 
-        self.ontology.pr
+        for subject in self.ontology.subjects(domain_includes_uri, object_uri):
+            subject_uri = URIRef(subject)
+
+            subject_label = (list(self.ontology.preferredLabel(subject_uri)))
+            subject_comment = self.ontology.comment(subject_uri)
+            print("\t", subject, subject_label, subject_comment)
+
         try:
-            print_values("predicates", self.ontology.predicates(value))
-            print_values("subject_predicates", self.ontology.subject_predicates(value))
-            print_values("predicate_objects", self.ontology.predicate_objects(value))
-            print_values("subject_objects", self.ontology.subject_objects(value))
-            print_values("transitive_objects", self.ontology.transitive_objects(value))
-            print_values("transitive_subjects", self.ontology.transitive_subjects(value))
+            # print_values("domainIncludes", self.ontology.subjects(domain_includes_uri, object_uri))
+            pass
         except:
             # eat it for now
             pass
