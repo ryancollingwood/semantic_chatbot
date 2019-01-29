@@ -8,3 +8,6 @@ def makedirs(path):
     except OSError as e:
         if e.errno != errno.EEXIST:
             raise
+
+def file_exists(path):
+    return os.path.exists(path)

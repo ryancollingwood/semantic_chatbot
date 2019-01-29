@@ -1,22 +1,58 @@
 from chatterbot.logic import LogicAdapter
+from chatterbot.conversation import Statement
 from random import uniform
 from rdflib import Graph
 from rdflib import URIRef
 from parse import parse
+from tqdm import tqdm
+import requests
+from filesystem import file_exists
+from filesystem import makedirs
 
 class OntoAdapter(LogicAdapter):
 
     def __init__(self, chatbot, **kwargs):
         super().__init__(chatbot, **kwargs)
         self.ontology = Graph()
-        self.ontology.parse("schema-org/schema.nt", format="nt")
+        self.load_schema()
+
+    def load_schema_for_type(self, type):
+        schema_file = "schema-org/{type}.nt"
+        url = "https://schema.org/{type}.nt"
+
+        self.download_schema(schema_file, url)
+
+        self.ontology.parse(schema_file, format="nt")
+
+    @staticmethod
+    def download_schema(schema_file, url):
+        # TODO refactor into more general download methods
+        if not file_exists(schema_file):
+            makedirs(schema_file.split("/")[0])
+            response = requests.get(url, stream=True)
+            # shamelessly stolen from https://stackoverflow.com/a/10744565
+            with open(schema_file, "wb") as handle:
+                for data in tqdm(response.iter_content()):
+                    handle.write(data)
+
+    def load_schema(self):
+        schema_file = "schema-org/schema.nt"
+        url = "http://schema.org/version/latest/schema.nt"
+
+        self.download_schema(schema_file, url)
+
+        self.ontology.parse(schema_file, format="nt")
 
     def parse_input(self, statement_text):
         results = parse("{instance} is a {object}", statement_text)
+        if results is None:
+            return None
         return results.named
 
     def can_process(self, statement):
         results = self.parse_input(statement.text)
+        if results is None:
+            return False
         if len(results) == 2:
             return True
         return False
@@ -53,10 +89,13 @@ class OntoAdapter(LogicAdapter):
         parsed = self.parse_input(input_statement.text)
 
         value = URIRef("http://schema.org/{}".format(parsed["object"]))
+        # self.load_schema_for_type(parsed["object"])
+        # property = URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#Property")
         print("value", value)
         print("labels", self.get_labels("type", parsed["object"]))
         labels = (list(self.ontology.preferredLabel(value)))
 
+        self.ontology.pr
         try:
             print_values("predicates", self.ontology.predicates(value))
             print_values("subject_predicates", self.ontology.subject_predicates(value))
@@ -69,7 +108,7 @@ class OntoAdapter(LogicAdapter):
             pass
 
         # For this example, we will just return the input as output
-        selected_statement = input_statement
+        selected_statement = Statement(text = "What is {}?".format(parsed["instance"]))
         selected_statement.confidence = confidence
 
         return selected_statement

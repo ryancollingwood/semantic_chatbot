@@ -110,6 +110,11 @@ class SemanticChatBot(object):
         """
         pub.sendMessage(Event.get_input, prompt = prompt)
 
+    def get_response(self, input_statement):
+        return self.bot.get_response(
+            input_statement
+        )
+
     def receive_input_statement(self, input_text: str):
         """
         For the `input_text` try to find a response.
@@ -136,6 +141,7 @@ class SemanticChatBot(object):
                 pub.sendMessage(Event.confirm_valid_response, input_statement = input_statement, response = response)
         else:
             pub.sendMessage(Event.teach_valid_response, input_statement = input_statement)
+
 
     def received_teach_valid_response(self, input_text: str, input_statement: Statement):
         """
