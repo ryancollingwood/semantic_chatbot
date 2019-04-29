@@ -8,6 +8,7 @@ from tqdm import tqdm
 import requests
 from filesystem import file_exists
 from filesystem import makedirs
+import re
 
 
 class OntoAdapter(LogicAdapter):
@@ -96,30 +97,36 @@ class OntoAdapter(LogicAdapter):
         print("object_uri", object_uri)   
 
         chosen_object_subject = None
+        related_object_subjects = {}
 
         for subject in self.ontology.subjects(domain_includes_uri, object_uri):
             subject_uri = URIRef(subject)
             subject_label = (list(self.ontology.preferredLabel(subject_uri)))
-            if subject_label and len(subject_label) > 1:
-                chosen_object_subject = subject_label[1]
+            if subject_label and len(subject_label) > 0 and len(subject_label[0]) > 1:
+                chosen_object_subject = str(subject_label[0][1])
+                chosen_object_subject = re.sub('([A-Z]+)', r'_\1',chosen_object_subject).lower()
             subject_comment = self.ontology.comment(subject_uri)
 
             # for input: "Avengers is a Move"
             # subject_label = [(rdflib.term.URIRef('http://www.w3.org/2000/01/rdf-schema#label'), rdflib.term.Literal('musicBy'))]
-            print("\t", subject_label, subject_label, subject_comment)
+            # print("\t", subject_label, subject_label, subject_comment)
 
             # for each of the subjects print out the expected types of the data
+            chosen_subject_object_range_types = []
             for range_type in self.ontology.objects(subject_uri, range_includes_uri):
                 range_uri = URIRef(range_type)
                 range_label = (list(self.ontology.preferredLabel(range_uri)))
-                range_comment = self.ontology.comment(range_uri)            
-                print("\t\t", range_type, range_label, range_comment)                
+                range_label = re.sub('([A-Z]+)', r'_\1',range_label.value).lower()
+                related_object_subjects.append(range_label)
+                range_comment = self.ontology.comment(range_uri)         
+                # print("\t\t", range_type, range_label, range_comment)    
+             related_object_subjects[chosen_object_subject] =  related_object_subjects
                 
         # For this example, we will just return the input as output
         if (subject_label):
             selected_statement = Statement(
                 text = "What is {subject_label} for {instance}?".format(
-                    subject_label = subject_label,
+                    subject_label = chosen_object_subject,
                     instance = parsed["instance"]
                     )     
                 )
