@@ -94,17 +94,18 @@ class OntoAdapter(LogicAdapter):
         domain_includes_uri = URIRef("http://schema.org/domainIncludes")
         range_includes_uri = URIRef("http://schema.org/rangeIncludes")
 
-        print("object_uri", object_uri)   
+        print("object_uri", object_uri)
 
         chosen_object_subject = None
         related_object_subjects = {}
 
         for subject in self.ontology.subjects(domain_includes_uri, object_uri):
             subject_uri = URIRef(subject)
-            subject_label = (list(self.ontology.preferredLabel(subject_uri)))
+            subject_label = list(self.ontology.preferredLabel(subject_uri))
+            
             if subject_label and len(subject_label) > 0 and len(subject_label[0]) > 1:
-                chosen_object_subject = str(subject_label[0][1])
-                chosen_object_subject = re.sub('([A-Z]+)', r'_\1',chosen_object_subject).lower().replace("_", " ").strip()
+                chosen_object_subject = self.get_label(str(subject_label[0][1].value))
+            
             subject_comment = self.ontology.comment(subject_uri)
 
             # for input: "Avengers is a Move"
@@ -112,15 +113,19 @@ class OntoAdapter(LogicAdapter):
             # print("\t", subject_label, subject_label, subject_comment)
 
             # for each of the subjects print out the expected types of the data
-            chosen_subject_object_range_types = []
-            for range_type in self.ontology.objects(subject_uri, range_includes_uri):
-                range_uri = URIRef(range_type)
-                range_label = (list(self.ontology.preferredLabel(range_uri)))
-                range_label = re.sub('([A-Z]+)', r'_\1', range_label[0][1].value).lower()
-                chosen_subject_object_range_types.append(range_label)
-                range_comment = self.ontology.comment(range_uri)         
-                # print("\t\t", range_type, range_label, range_comment)    
-            related_object_subjects[chosen_object_subject] =  chosen_subject_object_range_types
+            if chosen_object_subject:
+                chosen_subject_object_range_types = []
+                for range_type in self.ontology.objects(subject_uri, range_includes_uri):
+                    range_uri = URIRef(range_type)
+                    range_label = list(self.ontology.preferredLabel(range_uri))
+
+                    if range_label and len(range_label) > 0 and len(range_label[0]) > 1:
+                        range_label = self.get_label(str(range_label[0][1].value))
+                        chosen_subject_object_range_types.append(range_label)
+                    
+                    range_comment = self.ontology.comment(range_uri)
+
+                related_object_subjects[chosen_object_subject] =  chosen_subject_object_range_types
 
         #print(related_object_subjects)
                 
@@ -142,3 +147,6 @@ class OntoAdapter(LogicAdapter):
             selected_statement.confidence = 0
             
         return selected_statement
+
+    def get_label(self, chosen_object_subject):
+        return re.sub('([A-Z]+)', r'_\1',chosen_object_subject).lower().replace("_", " ").strip()
