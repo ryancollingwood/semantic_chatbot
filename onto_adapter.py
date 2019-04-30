@@ -104,7 +104,7 @@ class OntoAdapter(LogicAdapter):
             subject_label = (list(self.ontology.preferredLabel(subject_uri)))
             if subject_label and len(subject_label) > 0 and len(subject_label[0]) > 1:
                 chosen_object_subject = str(subject_label[0][1])
-                chosen_object_subject = re.sub('([A-Z]+)', r'_\1',chosen_object_subject).lower()
+                chosen_object_subject = re.sub('([A-Z]+)', r'_\1',chosen_object_subject).lower().replace("_", " ").strip()
             subject_comment = self.ontology.comment(subject_uri)
 
             # for input: "Avengers is a Move"
@@ -116,11 +116,13 @@ class OntoAdapter(LogicAdapter):
             for range_type in self.ontology.objects(subject_uri, range_includes_uri):
                 range_uri = URIRef(range_type)
                 range_label = (list(self.ontology.preferredLabel(range_uri)))
-                range_label = re.sub('([A-Z]+)', r'_\1',range_label.value).lower()
-                related_object_subjects.append(range_label)
+                range_label = re.sub('([A-Z]+)', r'_\1', range_label[0][1].value).lower()
+                chosen_subject_object_range_types.append(range_label)
                 range_comment = self.ontology.comment(range_uri)         
                 # print("\t\t", range_type, range_label, range_comment)    
-             related_object_subjects[chosen_object_subject] =  related_object_subjects
+            related_object_subjects[chosen_object_subject] =  chosen_subject_object_range_types
+
+        #print(related_object_subjects)
                 
         # For this example, we will just return the input as output
         if (subject_label):
@@ -128,7 +130,7 @@ class OntoAdapter(LogicAdapter):
                 text = "What is {subject_label} for {instance}?".format(
                     subject_label = chosen_object_subject,
                     instance = parsed["instance"]
-                    )     
+                    )
                 )
             selected_statement.confidence = confidence
         else:
