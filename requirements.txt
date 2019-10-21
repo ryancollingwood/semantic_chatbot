@@ -6,7 +6,7 @@ chatterbot-corpus==1.2.0
 idna==2.8
 isodate==0.6.0
 mathparse==0.1.2
-nltk==3.4
+nltk==3.4.5
 parse==1.11.1
 Pint==0.9
 pymongo==3.7.2
