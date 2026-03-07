@@ -293,4 +293,5 @@ def chat(name: str):
             break
 
 
-chat("Terminal")
+if __name__ == "__main__":
+    chat("Terminal")
