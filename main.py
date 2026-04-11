@@ -208,15 +208,15 @@ class TerminalChannel(Channel):
         Get confirmation, this will loop until we either get a yes or a no
         :return:
         """
-        text = input()
+        while True:
+            text = input()
 
-        if 'yes' in text.lower():
-            return True
-        elif 'no' in text.lower():
-            return False
-        else:
+            if 'yes' in text.lower():
+                return True
+            elif 'no' in text.lower():
+                return False
+
             print('Please type either "Yes" or "No"')
-            return self.get_feedback()
 
     def get_input(self, prompt: str):
         """
@@ -293,4 +293,5 @@ def chat(name: str):
             break
 
 
-chat("Terminal")
+if __name__ == "__main__":
+    chat("Terminal")
